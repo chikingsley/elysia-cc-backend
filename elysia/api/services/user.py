@@ -146,11 +146,11 @@ class UserManager:
         config: Config | None = None,
     ):
         """
-        Add a user to the UserManager.
+        Add a user to the UserManager (idempotent - safe to call multiple times).
 
         Args:
             user_id (str): Required. The unique identifier for the user.
-            config (Config): Required. The config for the user.
+            config (Config): Optional. The config for the user.
         """
 
         # add user if it doesn't exist
@@ -176,9 +176,8 @@ class UserManager:
 
     async def get_user_local(self, user_id: str):
         """
-        Return a local user object.
-        Will raise a ValueError if the user is not found.
-
+        Return a local user object, auto-initializing if necessary.
+        
         Args:
             user_id (str): Required. The unique identifier for the user.
 
@@ -188,9 +187,9 @@ class UserManager:
         """
 
         if user_id not in self.users:
-            raise ValueError(
-                f"User {user_id} not found. Please initialise a user first (by calling `add_user_local`)."
-            )
+            # Auto-initialize the user instead of throwing error
+            logger.info(f"Auto-initializing user {user_id}")
+            await self.add_user_local(user_id)
 
         # update last request (adds last_request to user)
         await self.update_user_last_request(user_id)
